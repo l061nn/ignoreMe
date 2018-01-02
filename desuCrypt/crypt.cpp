@@ -2,10 +2,11 @@
 #define KEYLENGTH  0x00800000
 #define ENCRYPT_ALGORITHM CALG_RC4 
 #define ENCRYPT_BLOCK_SIZE 8 
-BOOL initializeCrypt() {
-	//opening algorithm handle
-	
-	//first we delete key if exist
+
+crypt::crypt(){}
+void crypt::initializeContainer() {	//opening algorithm handle
+
+//first we delete key if exist
 	CryptAcquireContext(
 		&provPtr,
 		L"desuKContainer",
@@ -27,22 +28,21 @@ BOOL initializeCrypt() {
 		&keyHandle)) {
 		std::cout << "keys generated" << std::endl;
 	}
-	else { return FALSE; }
-	return TRUE;
-}	
-void destroyKeys() {
+
+}
+crypt::~crypt() {}
+void crypt::destroyKeys(){
 	if (keyHandle) {
 		CryptDestroyKey(keyHandle);
 	}
 	if (provPtr) {
 		CryptReleaseContext(provPtr, NULL);
 	}
-
 }
 
 
 
-void encryptBuffer(byte *buf, DWORD bufLen, BOOL isLastBlock) {
+void crypt::encryptBuffer(byte *buf, DWORD bufLen, BOOL isLastBlock) {
 	
 	if (CryptEncrypt(
 		keyHandle,
@@ -56,7 +56,7 @@ void encryptBuffer(byte *buf, DWORD bufLen, BOOL isLastBlock) {
 		//std::cout << "encrypted buffer" << std::endl;
 	}
 }
-void decryptBuffer(byte *buf, DWORD bufLen, BOOL isLastBlock) {
+void crypt::decryptBuffer(byte *buf, DWORD bufLen, BOOL isLastBlock) {
 	if (CryptDecrypt(
 		keyHandle,
 		NULL,
@@ -69,7 +69,7 @@ void decryptBuffer(byte *buf, DWORD bufLen, BOOL isLastBlock) {
 	}
 }
 
-BOOL writeKeyToFile() {
+BOOL crypt::writeKeyToFile() {
 	DWORD writtenBytes;
 	if (CryptGenKey(
 		provPtr,
@@ -152,7 +152,7 @@ BOOL writeKeyToFile() {
 			return TRUE;
 			//std::wcout << keyContainerPath << std::endl;
 }
-BOOL importKeyFromFile() {
+BOOL crypt::importKeyFromFile() {
 	CryptAcquireContext(
 		&provPtr,
 		L"desuKContainer", //can produce errors if not unique
@@ -175,7 +175,7 @@ BOOL importKeyFromFile() {
 		sizeof(DWORD),
 		&bytesRead,
 		NULL) == TRUE) {
-		std::cout << "key lean read" << std::endl;
+		std::cout << "key len read" << std::endl;
 	}
 
 	else { return FALSE; }
@@ -204,5 +204,6 @@ BOOL importKeyFromFile() {
 		std::cout << "key imported into CSP" << std::endl;
 	}
 	free(keyBlob);
+	CloseHandle(keyFile);
 	return TRUE;
 }

